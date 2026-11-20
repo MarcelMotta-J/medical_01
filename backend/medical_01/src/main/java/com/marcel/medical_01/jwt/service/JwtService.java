@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 
+import java.util.stream.Collectors;
+
 @Service
 public class JwtService {
 
@@ -28,12 +30,25 @@ public class JwtService {
 
         Instant now = Instant.now();
 
+        String scope = authentication.getAuthorities()
+                .stream()
+                .map(authority -> authority.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .collect(Collectors.joining(" "));
+
+        authentication.getAuthorities()
+                .forEach(authority ->
+                        System.out.println(
+                                "AUTHORITY: " + authority.getAuthority()
+                        )
+                );
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("medical-appointment-scheduling")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(jwtExpiration))
                 .subject(authentication.getName())
-                .claim("scope", "USER")
+                .claim("scope", scope)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader
